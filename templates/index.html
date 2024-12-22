@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharity - Donate Excess Food</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        header {
+            background-color: #2d3e50;
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-bottom: 3px solid #fff;
+            position: relative;
+        }
+        header h1 {
+            font-size: 3em;
+            margin: 0;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+        header p {
+            font-size: 1.2em;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+        .view-donations-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            text-decoration: none;
+        }
+        .view-donations-btn:hover {
+            background-color: #218838;
+        }
+        .container {
+            width: 80%;
+            margin: 30px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: slideIn 1s ease-in-out;
+        }
+        h2 {
+            color: #343a40;
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border: 1px solid #28a745;
+        }
+        .form-group button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+        }
+        .form-group button:hover {
+            background-color: #218838;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #2d3e50;
+            color: white;
+            margin-top: 30px;
+        }
+        footer p {
+            margin: 0;
+        }
+        /* Animations */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        @keyframes slideIn {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+    </style>
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <header>
+        <h1>SHARITY</h1>
+        <p>Donate Excess Food to Those in Need</p>
+        <a href="/donations" class="view-donations-btn">View Donations</a>
+    </header>
+    <div class="container">
+        <h2>Food Donation Form</h2>
+        <form id="donationForm">
+            <div class="form-group">
+                <label for="donorName">Donor's Name:</label>
+                <input type="text" id="donorName" name="donorName" placeholder="Enter your name" required>
+            </div>
+            <div class="form-group">
+                <label for="foodDetails">Food Details:</label>
+                <input type="text" id="foodDetails" name="foodDetails" placeholder="Type of food (e.g. rice, curry)" required>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantity (in kg):</label>
+                <input type="number" id="quantity" name="quantity" placeholder="Enter the quantity in kg" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location:</label>
+                <input type="text" id="location" name="location" placeholder="Enter your address or event location" required>
+            </div>
+            <div class="form-group">
+                <label for="ngoSelect">Select Nearby NGO:</label>
+                <select id="ngoSelect" name="ngoSelect">
+                    <option value="ngo1">NGO 1 - Helping Hands</option>
+                    <option value="ngo2">NGO 2 - Food for All</option>
+                    <option value="ngo3">NGO 3 - Care & Share</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit">Donate Now</button>
+            </div>
+        </form>
+        <h2>Nearby NGOs</h2>
+        <!-- Leaflet.js Map Display -->
+        <div id="map"></div>
+    </div>
+    <footer>
+        <p>&copy; 2024 SHARITY | All Rights Reserved</p>
+    </footer>
+    <!-- Leaflet.js JavaScript -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize Leaflet Map
+        const map = L.map('map').setView([28.6139, 77.2090], 12); // Default: New Delhi
+        // Add OSM tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        // Predefined NGO locations
+        const ngos = [
+            { name: "Helping Hands", coords: [28.7041, 77.1025] },
+            { name: "Food for All", coords: [28.5355, 77.3910] },
+            { name: "Care & Share", coords: [28.4089, 77.3178] }
+        ];
+        ngos.forEach(ngo => {
+            L.marker(ngo.coords).addTo(map)
+                .bindPopup(`<b>${ngo.name}</b>`)
+                .openPopup();
+        });
+        // Handle form submission (update with real backend logic)
+        document.getElementById('donationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Capture current date and time
+            const now = new Date();
+            const donationTime = now.toLocaleString(); // Get readable date & time
+            // Get form data
+            const donorName = document.getElementById('donorName').value;
+            const foodDetails = document.getElementById('foodDetails').value;
+            const quantity = document.getElementById('quantity').value;
+            const location = document.getElementById('location').value;
+            const ngo = document.getElementById('ngoSelect').value;
+            // Send the data to the backend via fetch
+            fetch('/submit_donation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    donorName: donorName,
+                    foodDetails: foodDetails,
+                    quantity: quantity,
+                    location: location,
+                    ngo: ngo,
+                    donationTime: donationTime  // Include the captured date and time
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Thank you for your donation! The donation was recorded.');
+                } else {
+                    alert('Error saving donation. Please try again.');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Error saving donation.');
+            });
+        });
+    </script>
+</body>
+</html>
